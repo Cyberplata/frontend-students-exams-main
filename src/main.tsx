@@ -1,55 +1,101 @@
+import { CSSProperties } from "react"
 import { createRoot } from "react-dom/client"
-import { SubmitHandler, useForm } from "react-hook-form"
+import { BrowserRouter, NavLink, Route, Routes } from "react-router"
 
-type Inputs = {
-  firstName: string
-  lastName: string
-  email: string
-  password: string
-  phone: string
+const footer: CSSProperties = {
+  padding: 10,
+  background: "lightslategrey",
 }
 
-const Login = () => {
-  const { register, handleSubmit } = useForm<Inputs>({
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      password: "",
-      phone: "",
-    },
-  })
+const link: CSSProperties = {
+  color: "lightsalmon",
+  fontSize: 20,
+}
 
-  const onSubmit: SubmitHandler<Inputs> = (data) => {
-    alert(JSON.stringify(data, null, 2))
-  }
+const activeLink: CSSProperties = {
+  fontWeight: "bold",
+  color: "red",
+  fontSize: 20,
+}
 
+const Dragons = () => {
+  return <h1>🐲 🐲 🐲</h1>
+}
+
+const Cats = () => {
+  return <h1>😺 🐱 😼</h1>
+}
+
+const Dogs = () => {
+  return <h1>🐶 🐶 🐶</h1>
+}
+
+const Menu = () => {
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div>
-        <input {...register("firstName")} placeholder={"Введите имя"} />
-      </div>
-      <div>
-        <input {...register("lastName")} placeholder={"Введите фамилию"} />
-      </div>
-      <div>
-        <input {...register("email")} placeholder={"Введите email"} type="email" />
-      </div>
-      <div>
-        <input {...register("password")} placeholder={"Введите пароль"} type="password" />
-      </div>
-      <div>
-        <input {...register("phone")} placeholder={"Введите номер телефона"} />
-      </div>
-      <button>Отправить</button>
-    </form>
+    <ul>
+      <li>
+        <NavLink to={Path.Dragons} style={({ isActive }) => (isActive ? activeLink : link)}>
+          dragons
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to={Path.Cats} style={({ isActive }) => (isActive ? activeLink : link)}>
+          cats
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to={Path.Dogs} style={({ isActive }) => (isActive ? activeLink : link)}>
+          dogs
+        </NavLink>
+      </li>
+    </ul>
   )
 }
 
-createRoot(document.getElementById("root")!).render(<Login />)
+// Routing
+const Path = {
+  Dragons: "dragons",
+  Cats: "cats",
+  Dogs: "dogs",
+} as const
+
+const Routing = () => {
+  return (
+    <Routes>
+      <Route path={Path.Dragons} element={<Dragons />} />
+      <Route path={Path.Cats} element={<Cats />} />
+      <Route path={Path.Dogs} element={<Dogs />} />
+    </Routes>
+  )
+}
+
+export const App = () => {
+  return (
+    <>
+      <Menu />
+      <Routing />
+      <footer style={footer}>
+        <h2>Footer</h2>
+      </footer>
+    </>
+  )
+}
+
+createRoot(document.getElementById("root")!).render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>,
+)
 
 // 📜 Описание:
-// Форма заполнения данных работает некорректно.
-// Пользователи жалуются на поле ввода "Телефона"
-// Найдите в коде ошибку. Исправленную версию всей строки напишите в качестве ответа.
-// <input {...register("phone")} placeholder={"Введите номер телефона"} />
+// В меню 3 рабочие навигационные ссылки. Но при переходе на страницы, активная ссылка не подсвечивается.
+// Это плохое UI/UX поведение
+
+// 🪛 Задача:
+// Что нужно написать в атрибуте style для NavLink, чтобы к активной ссылке применялся стиль activeLink,
+// а к не активной, стиль link
+// ❗ Дублирование кода в данной задаче не нужно исправлять
+
+// В качестве ответа укажите код в атрибут style с измененным кодом
+// 🖥 Пример ответа: style={link || activeLink}
+// style={({ isActive }) => (isActive ? activeLink : link)} ✅
