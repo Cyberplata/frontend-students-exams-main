@@ -1,50 +1,41 @@
 import { createRoot } from "react-dom/client"
-import { SubmitHandler, useForm } from "react-hook-form"
+import { Route, Routes, BrowserRouter } from "react-router"
 
-type Inputs = {
-  name: string
-}
-
-export const Login = () => {
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { isValid, isDirty },
-  } = useForm<Inputs>({
-    defaultValues: { name: "" },
-  })
-
-  const onSubmit: SubmitHandler<Inputs> = (data) => {
-    const minLength = 5
-    if (data.name.length < minLength) {
-      alert(`❌ FirstName must be at least ${minLength} characters long`)
-    } else {
-      alert(JSON.stringify(data, null, 2))
-    }
-  }
-
+export const Main = () => {
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div>
-        <input {...register("name")} />
-      </div>
-      {/*<button type="submit" disabled={!(isValid && isDirty)}>*/}
-      <button type="submit" disabled={!(isDirty && watch("name").length >= 5)}> //✅
-        Отправить
-      </button>
-    </form>
+    <>
+      <h2>✅ Список тудулистов</h2>
+      <h2>📜 Список постов</h2>
+    </>
   )
 }
 
-createRoot(document.getElementById("root")!).render(<Login />)
+// App
+export const App = () => {
+  return (
+    <Routes>
+      <Route path={"/"} element={<Main />} />
+    </Routes>
+  )
+}
+
+createRoot(document.getElementById("root")!).render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
+)
 
 // 📜 Описание:
-// Начните вводить символы в input. После ввода первого символа кнопка "Отправить" раздизаблится.
-// Задача: кнопка "Отправить" должна раздизаблиться только в том случае, если длинна имени больше, либо равна 5 символам.
-// ❗Текст ошибки выводить в разметке не нужно.
-// ❗Сторонние библиотеки (например zod, yup) использовать запрещено.
-// ❗Если используете свой message для обработки ошибки, то в качестве текста ошибки напишите 'Error'
+// Белый экран... Приложение не работает.
+// Какие изменения необходимо сделать в строке
+// createRoot(document.getElementById("root")!).render(
+// <App />
+// )
+// чтобы приложение заработало и на экране отобразилось 2 заголовка
+// Исправленную версию строки напишите в качестве ответа.
+// 💡Ответ может быть в несколько строк
 
-// В качестве ответа напишите полностью тег в котором вы изменяли значения
-// 🖥 Пример ответа: <input {...register("name", {disabled })} />
+// Пример ответа:
+// createRoot(document.getElementById("root")!).render(
+// <App />
+// )
