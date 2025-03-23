@@ -1,41 +1,55 @@
 import { createRoot } from "react-dom/client"
-import { Route, Routes, BrowserRouter } from "react-router"
+import { SubmitHandler, useForm } from "react-hook-form"
 
-export const Main = () => {
+type Inputs = {
+  firstName: string
+  lastName: string
+  email: string
+  password: string
+  phone: string
+}
+
+const Login = () => {
+  const { register, handleSubmit } = useForm<Inputs>({
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      phone: "",
+    },
+  })
+
+  const onSubmit: SubmitHandler<Inputs> = (data) => {
+    alert(JSON.stringify(data, null, 2))
+  }
+
   return (
-    <>
-      <h2>✅ Список тудулистов</h2>
-      <h2>📜 Список постов</h2>
-    </>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div>
+        <input {...register("firstName")} placeholder={"Введите имя"} />
+      </div>
+      <div>
+        <input {...register("lastName")} placeholder={"Введите фамилию"} />
+      </div>
+      <div>
+        <input {...register("email")} placeholder={"Введите email"} type="email" />
+      </div>
+      <div>
+        <input {...register("password")} placeholder={"Введите пароль"} type="password" />
+      </div>
+      <div>
+        <input {...register("phone")} placeholder={"Введите номер телефона"} />
+      </div>
+      <button>Отправить</button>
+    </form>
   )
 }
 
-// App
-export const App = () => {
-  return (
-    <Routes>
-      <Route path={"/"} element={<Main />} />
-    </Routes>
-  )
-}
-
-createRoot(document.getElementById("root")!).render(
-  <BrowserRouter>
-    <App />
-  </BrowserRouter>
-)
+createRoot(document.getElementById("root")!).render(<Login />)
 
 // 📜 Описание:
-// Белый экран... Приложение не работает.
-// Какие изменения необходимо сделать в строке
-// createRoot(document.getElementById("root")!).render(
-// <App />
-// )
-// чтобы приложение заработало и на экране отобразилось 2 заголовка
-// Исправленную версию строки напишите в качестве ответа.
-// 💡Ответ может быть в несколько строк
-
-// Пример ответа:
-// createRoot(document.getElementById("root")!).render(
-// <App />
-// )
+// Форма заполнения данных работает некорректно.
+// Пользователи жалуются на поле ввода "Телефона"
+// Найдите в коде ошибку. Исправленную версию всей строки напишите в качестве ответа.
+// <input {...register("phone")} placeholder={"Введите номер телефона"} />
