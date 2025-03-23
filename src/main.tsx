@@ -1,39 +1,35 @@
-import { useEffect } from "react"
 import { createRoot } from "react-dom/client"
-import { BrowserRouter, Route, Routes, useNavigate, useParams } from "react-router"
+import { SubmitHandler, useForm } from "react-hook-form"
+
+type Inputs = {
+  email: string
+  password: string
+}
 
 const Login = () => {
-  const navigate = useNavigate()
+  const { register, handleSubmit } = useForm<Inputs>({
+    defaultValues: { email: "", password: "" },
+  })
 
-  useEffect(() => {
-    navigate("/secret/JIUzI1NiIsInR5cCI6IkpXVCJ9")
-  }, [])
+  const onSubmit: SubmitHandler<Inputs> = (data) => {
+    console.log(data)
+    alert(JSON.stringify(data, null, 2))
+  }
 
-  return <div>Login</div>
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register("email")} placeholder={"Введите email"} type="email" />
+      <input {...register("password")} placeholder={"Введите пароль"} type="password" />
+      <button type="submit">Отправить</button>
+    </form>
+  )
 }
 
-const SecretToken = () => {
-  // const token = "no token" // ❗ FIX
-  const { token } = useParams<{ token: string }>() // ✅
-  // const token = useParams().token || "no token"
+createRoot(document.getElementById("root")!).render(<Login />)
 
-
-  return <h1>🦾 token: {token}</h1>
-}
-
-createRoot(document.getElementById("root")!).render(
-  <BrowserRouter>
-    <Routes>
-      <Route path={"/"} element={<Login />} />
-      <Route path={"/secret/:token"} element={<SecretToken />} />
-    </Routes>
-  </BrowserRouter>,
-)
-
-// 📜Описание:
-// Исправьте код на строке с пометкой ❗FIX так, чтобы на странице отобразился токен.
-
-//❗Ответ можно указывать с типизацией и без. Учтено несколько вариантов
-
-// 🖥 Пример ответа: const token = 'JIUzI1NiIsInR5cCI6IkpXVCJ9'
-// const { token } = useParams<{ token: string }>() // ✅
+// 📜 Описание:
+// При заполнении данных формы и их отправке вы должны увидеть alert c
+// введенными значениями, но из-за допущенной ошибки форма работает не корректно.
+// Найдите ошибку и исправленную версию строки напишите в качестве ответа.
+// ❗После того как показался alert форма не должна перегружать все приложение
+// <button type="submit">Отправить</button> ✅
