@@ -1,101 +1,76 @@
 import { CSSProperties } from "react"
 import { createRoot } from "react-dom/client"
-import { BrowserRouter, NavLink, Route, Routes } from "react-router"
+import { SubmitHandler, useForm } from "react-hook-form"
 
-const footer: CSSProperties = {
-  padding: 10,
-  background: "lightslategrey",
-}
-
-const link: CSSProperties = {
-  color: "lightsalmon",
-  fontSize: 20,
-}
-
-const activeLink: CSSProperties = {
-  fontWeight: "bold",
+const error: CSSProperties = {
   color: "red",
-  fontSize: 20,
+  fontWeight: "bold",
 }
 
-const Dragons = () => {
-  return <h1>🐲 🐲 🐲</h1>
+type Inputs = {
+  firstName: string
+  email: string
 }
 
-const Cats = () => {
-  return <h1>😺 🐱 😼</h1>
-}
+const Login = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Inputs>({
+    defaultValues: { firstName: "", email: "" },
+  })
 
-const Dogs = () => {
-  return <h1>🐶 🐶 🐶</h1>
-}
+  const onSubmit: SubmitHandler<Inputs> = (data) => {
+    alert(JSON.stringify(data, null, 2))
+  }
 
-const Menu = () => {
   return (
-    <ul>
-      <li>
-        <NavLink to={Path.Dragons} style={({ isActive }) => (isActive ? activeLink : link)}>
-          dragons
-        </NavLink>
-      </li>
-      <li>
-        <NavLink to={Path.Cats} style={({ isActive }) => (isActive ? activeLink : link)}>
-          cats
-        </NavLink>
-      </li>
-      <li>
-        <NavLink to={Path.Dogs} style={({ isActive }) => (isActive ? activeLink : link)}>
-          dogs
-        </NavLink>
-      </li>
-    </ul>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div>
+        <input {...register("firstName")} placeholder={"Введите имя"} />
+      </div>
+      <div>
+        <input
+          {...register("email", {
+            required: "Email is required",
+            pattern: {
+              value: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
+              message: "Incorrect email",
+            },
+          })}
+          placeholder={"Введите email"}
+        />
+        {/*<input*/}
+        {/*  type="password"*/}
+        {/*  label="Password"*/}
+        {/*  placeholder={"Введите password"}*/}
+        {/*  {...register("password", {*/}
+        {/*    required: "Password is required",*/}
+        {/*    // pattern: {*/}
+        {/*    //    value: /^.{3,}$/,*/}
+        {/*    minLength: {*/}
+        {/*      // ✅ Использование minLength здесь лучше, чем регулярное выражение, потому что оно встроено в react-hook-form и сразу работает с errors*/}
+        {/*      value: 3,*/}
+        {/*      message: "Password must be at least 3 characters long",*/}
+        {/*    },*/}
+        {/*  })}*/}
+        {/*/>*/}
+        {errors.email && <div style={error}>{errors.email.message}</div>}
+      </div>
+      <button type="submit">Отправить</button>
+    </form>
   )
 }
 
-// Routing
-const Path = {
-  Dragons: "dragons",
-  Cats: "cats",
-  Dogs: "dogs",
-} as const
-
-const Routing = () => {
-  return (
-    <Routes>
-      <Route path={Path.Dragons} element={<Dragons />} />
-      <Route path={Path.Cats} element={<Cats />} />
-      <Route path={Path.Dogs} element={<Dogs />} />
-    </Routes>
-  )
-}
-
-export const App = () => {
-  return (
-    <>
-      <Menu />
-      <Routing />
-      <footer style={footer}>
-        <h2>Footer</h2>
-      </footer>
-    </>
-  )
-}
-
-createRoot(document.getElementById("root")!).render(
-  <BrowserRouter>
-    <App />
-  </BrowserRouter>,
-)
+createRoot(document.getElementById("root")!).render(<Login />)
 
 // 📜 Описание:
-// В меню 3 рабочие навигационные ссылки. Но при переходе на страницы, активная ссылка не подсвечивается.
-// Это плохое UI/UX поведение
+// Загрузив приложение вы увидите ошибку под полем email, но вы еще ничего не ввели.
+// Исправьте строку кода которая выводит сообщение удовлетворяющее условиям:
+// 1) Сообщение об ошибке показывалось только в том случае, когда email введен некорректно.
+// 2) Вместо ERROR должен быть конкретный текст ошибки прописанный в валидации к этому полю.
+// Исправленную версию строки напишите в качестве ответа.
 
-// 🪛 Задача:
-// Что нужно написать в атрибуте style для NavLink, чтобы к активной ссылке применялся стиль activeLink,
-// а к не активной, стиль link
-// ❗ Дублирование кода в данной задаче не нужно исправлять
-
-// В качестве ответа укажите код в атрибут style с измененным кодом
-// 🖥 Пример ответа: style={link || activeLink}
-// style={({ isActive }) => (isActive ? activeLink : link)} ✅
+// 🖥 Пример ответа: {<div style={error}>Incorrect email</div>}
+// {errors.email && <div style={error}>ERROR</div>} ✅
