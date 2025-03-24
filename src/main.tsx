@@ -1,65 +1,164 @@
-import { configureStore, createSlice } from "@reduxjs/toolkit"
-import { createRoot } from "react-dom/client"
+import { useEffect } from "react"
 import { Provider, useDispatch, useSelector } from "react-redux"
+import axios from "axios"
+import { asyncThunkCreator, buildCreateSlice, configureStore } from "@reduxjs/toolkit"
+import { createRoot } from "react-dom/client"
 
-// oxygenCounter slice
-const oxygenSlice = createSlice({
-  name: "oxygenCounter",
-  initialState: {
-    percent: 21,
+// Types
+type Todolist = {
+  id: string
+  title: string
+  order: number
+  createdAt: string
+  updatedAt: string
+  completed: boolean
+}
+
+type User = {
+  id: string
+  name: string
+  age: number
+}
+
+type UsersResponse = {
+  items: User[]
+  totalCount: number
+}
+
+// Api
+const instance = axios.create({ baseURL: "https://exams-frontend.kimitsu.it-incubator.io/api/" })
+
+const api = {
+  getTodos() {
+    return instance.get<Todolist[]>("todos")
   },
-  reducers: {
-    increase: (state) => {
-      state.percent += 1
-    },
+  getUsers() {
+    return instance.get<UsersResponse>("users")
+  },
+}
+
+// Slice
+const createAppSlice = buildCreateSlice({ creators: { asyncThunk: asyncThunkCreator } })
+
+const slice = createAppSlice({
+  name: "app",
+  initialState: {
+    todolists: [] as Todolist[],
+    users: [] as User[],
+    error: null as string | null,
   },
   selectors: {
-    selectPercent: (state) => state.percent,
+    selectTodolists: (state) => state.todolists,
+    selectUsers: (state) => state.users,
+    selectError: (state) => state.error,
   },
+  reducers: (create) => ({
+    setError: create.reducer<{ error: string | null }>((state, action) => {
+      state.error = action.payload.error
+    }),
+    fetchTodolists: create.asyncThunk(
+      async (_arg, { rejectWithValue }) => {
+        try {
+          const responseTodolists = await api.getTodos() // ❗AAA
+          return { todolists: responseTodolists.data } // ❗BBB
+        } catch (error) {
+          return rejectWithValue(null)
+        }
+      },
+      {
+        fulfilled: (state, action) => {
+          state.todolists = action.payload.todolists
+        },
+      },
+    ),
+    fetchUsers: create.asyncThunk(
+      async (_arg, { rejectWithValue }) => {
+        try {
+          const responseUsers = await api.getUsers() // ❗CCC
+          return { users: responseUsers.data.items } // ❗DDD
+        } catch (error) {
+          return rejectWithValue(null)
+        }
+      },
+      {
+        fulfilled: (state, action) => {
+          state.users = action.payload.users
+        },
+      },
+    ),
+  }),
 })
-const { increase } = oxygenSlice.actions
-const { selectPercent } = oxygenSlice.selectors
 
-// temperature slice
-const temperatureSlice = createSlice({
-  name: "temperatureCounter",
-  initialState: {
-    celsius: 20,
-  },
-  reducers: {},
-  selectors: {
-    selectCelsius: (state) => state.celsius,
-  },
-  extraReducers: (builder) => { // ✅
-    builder.addCase(increase, (state) => {
-      state.celsius += 2
-    })
-  },
-})
+const appReducer = slice.reducer
+const { fetchTodolists, fetchUsers } = slice.actions
+const { selectTodolists, selectUsers, selectError } = slice.selectors
 
-const { selectCelsius } = temperatureSlice.selectors
-
-// App.tsx
+// App
 const App = () => {
-  const oxygen = useAppSelector(selectPercent)
-  const temperature = useAppSelector(selectCelsius)
-  const dispatch = useAppDispatch()
-
   return (
     <>
-      <button onClick={() => dispatch(increase())}>Add Oxygen</button>
-      <div>Oxygen: {oxygen}%</div>
-      <hr />
-      <div>Temperature: {temperature}°C</div>
+      <h1>✅Todos & 🙂Users</h1>
+      <div style={{ display: "flex", justifyContent: "space-evenly" }}>
+        <Todos />
+        <Users />
+      </div>
     </>
   )
 }
 
-// store.ts
+const Todos = () => {
+  const dispatch = useAppDispatch()
+  const todolists = useAppSelector(selectTodolists)
+  const error = useAppSelector(selectError)
+
+  useEffect(() => {
+    dispatch(fetchTodolists())
+  }, [])
+
+  return (
+    <div>
+      <h2>✅ Список тудулистов</h2>
+      {!!error && <h2 style={{ color: "red" }}>{error}</h2>}
+      {todolists.map((todolist) => (
+        <div style={todolist.completed ? { color: "grey" } : {}} key={todolist.id}>
+          <input type="checkbox" checked={todolist.completed} />
+          <b>Описание</b>: {todolist.title}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+const Users = () => {
+  const dispatch = useAppDispatch()
+  const users = useAppSelector(selectUsers)
+  const error = useAppSelector(selectError)
+
+  useEffect(() => {
+    dispatch(fetchUsers())
+  }, [])
+
+  return (
+    <div>
+      <h2>🙂 Список юзеров</h2>
+      {!!error && <h2 style={{ color: "red" }}>{error}</h2>}
+      <div>
+        {users.map((user) => {
+          return (
+            <div key={user.id}>
+              <b>name</b>:{user.name} - <b>age</b>:{user.age}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// Store
 const store = configureStore({
   reducer: {
-    oxygenCounter: oxygenSlice.reducer,
-    temperatureCounter: temperatureSlice.reducer,
+    [slice.name]: appReducer,
   },
 })
 
@@ -68,7 +167,6 @@ type AppDispatch = typeof store.dispatch
 const useAppDispatch = useDispatch.withTypes<AppDispatch>()
 const useAppSelector = useSelector.withTypes<RootState>()
 
-// main.ts
 createRoot(document.getElementById("root")!).render(
   <Provider store={store}>
     <App />
@@ -76,20 +174,18 @@ createRoot(document.getElementById("root")!).render(
 )
 
 // 📜 Описание:
-// У вас есть два счетчика: для уровня кислорода (%) и температуры (°C).
-// При нажатии на кнопку Add Oxygen увеличивается уровень кислорода.
+// Что нужно написать вместо // ❗AAA, ❗BBB, ❗CCC, ❗DDD для того чтобы на экране
+// отобразился список тудулистов и юзеров
+// Каждый ответ укажите на новой строке или через пробел соблюдая порядок
 
-// 🪛 Задача:
-// Реализуйте следующую задачу:
-// При нажатии на кнопку Add Oxygen помимо увеличения уровня кислорода
-// реализуйте увеличении температуры на 2°C
+// Пример ответа:
+// const a = 1 + 1
+// return a
+// const c = 1 + 3
+// return c
 
-// В качестве ответа укажите добавленный вами код
-// ❗Операция должна быть реализована мутабельным образом.
-// 💡Подсказка. Используйте extraReducers
-
-// extraReducers: (builder) => { // ✅
-//     builder.addCase(increase, (state) => {
-//       state.celsius += 2
-//     })
-//   },
+// const responseTodolists = await api.getTodos()
+// return { todolists: responseTodolists.data }
+//
+// const responseUsers = await api.getUsers()
+// return { users: responseUsers.data.items }
