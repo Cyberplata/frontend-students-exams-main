@@ -1,102 +1,112 @@
-import { configureStore, createSlice } from "@reduxjs/toolkit"
 import { createRoot } from "react-dom/client"
-import { Provider, useDispatch, useSelector } from "react-redux"
+import { BrowserRouter, Route, Routes, useNavigate, useParams } from "react-router"
 
-// slice
-const slice = createSlice({
-  name: "playlist",
-  initialState: {
-    albums: [
-      {
-        id: 1,
-        title: "Album 1",
-        songs: [
-          { id: 1, title: "Song 1-1" },
-          { id: 2, title: "Song 1-2" },
-        ],
-      },
-      {
-        id: 2,
-        title: "Album 2",
-        songs: [
-          { id: 3, title: "Song 2-1" },
-          { id: 4, title: "Song 2-2" },
-        ],
-      },
-    ],
+type User = {
+  id: number
+  name: string
+  avatar: string
+  age: number
+  address: string
+}
+
+const users: User[] = [
+  {
+    id: 1,
+    name: "my Name",
+    age: 32,
+    avatar: "—ฅ/ᐠ.̫ .ᐟ\\ฅ—",
+    address: "my Address",
   },
-  reducers: {
-    removeLastSongFromAlbum: (state, action) => {
-      const album = state.albums.find((album) => album.id === action.payload) // ✅
-      if (album && album.songs.length > 0) {  // ✅
-        album.songs.pop() // ✅
-      }
-    },
+  {
+    id: 2,
+    name: "John",
+    age: 22,
+    avatar: ":)",
+    address: "California",
   },
-  selectors: {
-    selectAlbums: (state) => state.albums,
+  {
+    id: 3,
+    name: "Mike",
+    age: 18,
+    avatar: "^._.^",
+    address: "New York",
   },
-})
+  {
+    id: 4,
+    name: "Emma",
+    age: 38,
+    avatar: "/ᐠ-ꞈ-ᐟ\\",
+    address: "Washington",
+  },
+]
 
-const { removeLastSongFromAlbum } = slice.actions
-const { selectAlbums } = slice.selectors
+const StartPage = () => {
+  const navigate = useNavigate()
+  const friends = users.filter((u) => u.id !== 1)
 
-// App.tsx
-const App = () => {
-  const albums = useAppSelector(selectAlbums)
-  const dispatch = useAppDispatch()
+  const mappedFriends = friends.map((f, i) => {
+    const go = () => {
+      navigate("/friend/" + f.id)
+    }
 
-  const removeLastSong = (albumId: number) => {
-    dispatch(removeLastSongFromAlbum(albumId))
-  }
+    return (
+      <div key={i} onClick={go} style={{ paddingLeft: 24, color: "blue", cursor: "pointer" }}>
+        {f.name}, {f.age}
+      </div>
+    )
+  })
 
   return (
-    <>
-      {albums.map((album) => (
-        <div key={album.id}>
-          <h3>{album.title}</h3>
-          <button onClick={() => removeLastSong(album.id)}>Remove Last Song</button>
-          <ul>
-            {album.songs.map((song) => (
-              <li key={song.id}>{song.title}</li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </>
+    <div>
+      <h2>🙂 My profile</h2>
+      <Profile userId={1} />
+      <hr />
+      <h2>👪 Friends</h2>
+      {mappedFriends}
+    </div>
   )
 }
 
-// store.ts
-const store = configureStore({
-  reducer: {
-    playlist: slice.reducer,
-  },
-})
+const Profile = ({ userId }: { userId?: number }) => {
+  const { id } = useParams<{ id: string }>()
+  const user = users.find((u) => u.id === +(id || userId || 0))
 
-type RootState = ReturnType<typeof store.getState>
-type AppDispatch = typeof store.dispatch
-const useAppDispatch = useDispatch.withTypes<AppDispatch>()
-const useAppSelector = useSelector.withTypes<RootState>()
+  return (
+    <div>
+      <div>
+        <b>avatar</b> {user?.avatar}
+      </div>
+      <div>
+        <div>
+          <b>name</b>: {user?.name}
+        </div>
+        <div>
+          <b>age</b>: {user?.age}
+        </div>
+        <div>
+          <b>address</b>: {user?.address}
+        </div>
+      </div>
+    </div>
+  )
+}
 
-// main.ts
 createRoot(document.getElementById("root")!).render(
-  <Provider store={store}>
-    <App />
-  </Provider>,
+  <BrowserRouter>
+    <Routes>
+      <Route path={"/"} element={<StartPage />} />
+      <Route path={"friend/:id"} element={<Profile />} /> // ✅
+      <Route path={"*"} element={<h1>❌404 Page Not Found❌</h1>} />
+    </Routes>
+  </BrowserRouter>,
 )
 
 // 📜 Описание:
-// Плейлист разделён на альбомы, и каждая кнопка Remove Last Song должна удалять последнюю песню из соответствующего альбома.
+// При загрузке приложения на экране отображается
+// профиль пользователя и список друзей.
+// Если кликнуть на пользователя, то видим ❌404 Page Not Found❌
+// Исправьте код, чтобы по клику на пользователя
+// отображалась странице с информацией о друге.
+// В качестве ответа укажите исправленную строку кода.
 
-// 🪛 Задача:
-// Перепишите изменение стейта таким образом, чтобы описание выше выполнялось
-// В качестве ответа укажите исправленный код написанный вместо return state.
-// ❗Изменение стейта должно быть написано мутабельным образом.
-// ❗Не используйте деструктуризацию action.payload (const {id} = action.payload)
-// ❗Не создавайте переменные из action.payload (const id = action.payload.id)
-
-// const album = state.albums.find((album) => album.id === action.payload)
-//       if (album && album.songs.length > 0) {
-//         album.songs.pop()
-//       }
+// <Route path={"friend/:id"} element={<Profile />} />
