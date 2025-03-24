@@ -1,87 +1,75 @@
-import { configureStore, createSlice } from "@reduxjs/toolkit"
+import axios from "axios"
 import { createRoot } from "react-dom/client"
-import { Provider, useDispatch, useSelector } from "react-redux"
+import { useEffect, useState } from "react"
 
-// slice
-const slice = createSlice({
-  name: "products",
-  initialState: [
-    { id: 1, name: "Laptop", inStock: true, price: 1500 },
-    { id: 2, name: "Smartphone", inStock: false, price: 800 },
-    { id: 3, name: "Tablet", inStock: true, price: 600 },
-  ],
-  reducers: {
-    applyDiscount: (state, action) => {
-      const discount = action.payload
-      state.forEach((product) => {
-        product.price = product.price - (product.price * discount) / 100
-      })
-    },
+// Types
+type Comment = {
+  postId: string
+  id: string
+  name: string
+  email: string
+  body: string
+}
+
+// Api
+const instance = axios.create({ baseURL: "https://exams-frontend.kimitsu.it-incubator.io/api/" })
+
+const commentsAPI = {
+  getComments() {
+    return instance.get<Comment[]>("comments")
   },
-  selectors: {
-    selectProducts: (state) => state,
+  createComment() {
+    const payload = {
+      body: "Это просто заглушка. Backend сам сгенерирует новый комментарий и вернет его вам",
+    }
+    // Promise.resolve() стоит в качестве заглушки, чтобы TS не ругался и код компилировался
+    // Promise.resolve() нужно удалить и написать правильный запрос для создания нового комментария
+    return instance.post<Comment>("comments", payload)
   },
-})
+}
 
-const { applyDiscount } = slice.actions
-const { selectProducts } = slice.selectors
+// App
+export const App = () => {
+  const [comments, setComments] = useState<Comment[]>([])
 
-// App.tsx
-const App = () => {
-  const products = useAppSelector(selectProducts)
-  const dispatch = useAppDispatch()
+  useEffect(() => {
+    commentsAPI.getComments().then((res) => {
+      setComments(res.data)
+    })
+  }, [])
 
-  const handleDiscount = (discount: number) => {
-    dispatch(applyDiscount(discount))
+  const createPostHandler = () => {
+    commentsAPI.createComment().then((res: any) => {
+      const newComment = res.data
+      setComments([newComment, ...comments])
+    })
   }
 
   return (
-    <div>
-      <button onClick={() => handleDiscount(10)}>10% Discount</button>
-      <button onClick={() => handleDiscount(30)}>30% Discount</button>
-      <button onClick={() => handleDiscount(50)}>50% Discount</button>
-      <ul>
-        {products.map((product) => (
-          <li key={product.id}>
-            <span>
-              {product.name} ({product.inStock ? "In Stock" : "Out of Stock"}) - ${product.price.toFixed(2)}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <>
+      <h1>📝 Список комментариев</h1>
+      <div style={{ marginBottom: "15px" }}>
+        <button style={{ marginLeft: "15px" }} onClick={() => createPostHandler()}>
+          Добавить новый комментарий
+        </button>
+      </div>
+
+      {comments.map((c) => {
+        return (
+          <div key={c.id}>
+            <b>Comment</b>: {c.body}{" "}
+          </div>
+        )
+      })}
+    </>
   )
 }
 
-// store.ts
-const store = configureStore({
-  reducer: {
-    products: slice.reducer,
-  },
-})
-
-type RootState = ReturnType<typeof store.getState>
-type AppDispatch = typeof store.dispatch
-const useAppDispatch = useDispatch.withTypes<AppDispatch>()
-const useAppSelector = useSelector.withTypes<RootState>()
-
-// main.ts
-createRoot(document.getElementById("root")!).render(
-  <Provider store={store}>
-    <App />
-  </Provider>,
-)
+createRoot(document.getElementById("root")!).render(<App />)
 
 // 📜 Описание:
-// При нажатии на кнопки с 10%, 30% или 50% скидками цены всех продуктов должны уменьшиться на
-// указанный процент.
+// Напишите запрос на сервер для создания нового комментария.
+// Типизацию возвращаемых данных в ответе указывать необязательно, но можно и указать (в ответах учтены оба варианта).
+// Исправленную версию строки напишите в качестве ответа.
 
-// 🪛 Задача:
-// Перепишите изменение стейта так, чтобы цена каждого продукта уменьшалась на указанный процент.
-// В качестве ответа укажите исправленный код написанный вместо return state.
-// ❗Операция должна быть реализована мутабельным образом.
-
-// const discount = action.payload
-//     state.forEach((product) => {
-//       product.price = product.price - (product.price * discount) / 100
-//     })
+// return instance.post<Comment>("comments", payload)
