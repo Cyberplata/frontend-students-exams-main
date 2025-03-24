@@ -1,112 +1,95 @@
+import { configureStore, createSlice } from "@reduxjs/toolkit"
 import { createRoot } from "react-dom/client"
-import { BrowserRouter, Route, Routes, useNavigate, useParams } from "react-router"
+import { Provider, useDispatch, useSelector } from "react-redux"
 
-type User = {
-  id: number
-  name: string
-  avatar: string
-  age: number
-  address: string
-}
-
-const users: User[] = [
-  {
-    id: 1,
-    name: "my Name",
-    age: 32,
-    avatar: "—ฅ/ᐠ.̫ .ᐟ\\ฅ—",
-    address: "my Address",
+// oxygenCounter slice
+const oxygenSlice = createSlice({
+  name: "oxygenCounter",
+  initialState: {
+    percent: 21,
   },
-  {
-    id: 2,
-    name: "John",
-    age: 22,
-    avatar: ":)",
-    address: "California",
+  reducers: {
+    increase: (state) => {
+      state.percent += 1
+    },
   },
-  {
-    id: 3,
-    name: "Mike",
-    age: 18,
-    avatar: "^._.^",
-    address: "New York",
+  selectors: {
+    selectPercent: (state) => state.percent,
   },
-  {
-    id: 4,
-    name: "Emma",
-    age: 38,
-    avatar: "/ᐠ-ꞈ-ᐟ\\",
-    address: "Washington",
+})
+const { increase } = oxygenSlice.actions
+const { selectPercent } = oxygenSlice.selectors
+
+// temperature slice
+const temperatureSlice = createSlice({
+  name: "temperatureCounter",
+  initialState: {
+    celsius: 20,
   },
-]
+  reducers: {},
+  selectors: {
+    selectCelsius: (state) => state.celsius,
+  },
+  extraReducers: (builder) => { // ✅
+    builder.addCase(increase, (state) => {
+      state.celsius += 2
+    })
+  },
+})
 
-const StartPage = () => {
-  const navigate = useNavigate()
-  const friends = users.filter((u) => u.id !== 1)
+const { selectCelsius } = temperatureSlice.selectors
 
-  const mappedFriends = friends.map((f, i) => {
-    const go = () => {
-      navigate("/friend/" + f.id)
-    }
-
-    return (
-      <div key={i} onClick={go} style={{ paddingLeft: 24, color: "blue", cursor: "pointer" }}>
-        {f.name}, {f.age}
-      </div>
-    )
-  })
+// App.tsx
+const App = () => {
+  const oxygen = useAppSelector(selectPercent)
+  const temperature = useAppSelector(selectCelsius)
+  const dispatch = useAppDispatch()
 
   return (
-    <div>
-      <h2>🙂 My profile</h2>
-      <Profile userId={1} />
+    <>
+      <button onClick={() => dispatch(increase())}>Add Oxygen</button>
+      <div>Oxygen: {oxygen}%</div>
       <hr />
-      <h2>👪 Friends</h2>
-      {mappedFriends}
-    </div>
+      <div>Temperature: {temperature}°C</div>
+    </>
   )
 }
 
-const Profile = ({ userId }: { userId?: number }) => {
-  const { id } = useParams<{ id: string }>()
-  const user = users.find((u) => u.id === +(id || userId || 0))
+// store.ts
+const store = configureStore({
+  reducer: {
+    oxygenCounter: oxygenSlice.reducer,
+    temperatureCounter: temperatureSlice.reducer,
+  },
+})
 
-  return (
-    <div>
-      <div>
-        <b>avatar</b> {user?.avatar}
-      </div>
-      <div>
-        <div>
-          <b>name</b>: {user?.name}
-        </div>
-        <div>
-          <b>age</b>: {user?.age}
-        </div>
-        <div>
-          <b>address</b>: {user?.address}
-        </div>
-      </div>
-    </div>
-  )
-}
+type RootState = ReturnType<typeof store.getState>
+type AppDispatch = typeof store.dispatch
+const useAppDispatch = useDispatch.withTypes<AppDispatch>()
+const useAppSelector = useSelector.withTypes<RootState>()
 
+// main.ts
 createRoot(document.getElementById("root")!).render(
-  <BrowserRouter>
-    <Routes>
-      <Route path={"/"} element={<StartPage />} />
-      <Route path={"friend/:id"} element={<Profile />} /> // ✅
-      <Route path={"*"} element={<h1>❌404 Page Not Found❌</h1>} />
-    </Routes>
-  </BrowserRouter>,
+  <Provider store={store}>
+    <App />
+  </Provider>,
 )
 
 // 📜 Описание:
-// При загрузке приложения на экране отображается
-// профиль пользователя и список друзей.
-// Если кликнуть на пользователя, то видим ❌404 Page Not Found❌
-// Исправьте код, чтобы по клику на пользователя
-// отображалась странице с информацией о друге.
-// В качестве ответа укажите исправленную строку кода.
+// У вас есть два счетчика: для уровня кислорода (%) и температуры (°C).
+// При нажатии на кнопку Add Oxygen увеличивается уровень кислорода.
 
-// <Route path={"friend/:id"} element={<Profile />} />
+// 🪛 Задача:
+// Реализуйте следующую задачу:
+// При нажатии на кнопку Add Oxygen помимо увеличения уровня кислорода
+// реализуйте увеличении температуры на 2°C
+
+// В качестве ответа укажите добавленный вами код
+// ❗Операция должна быть реализована мутабельным образом.
+// 💡Подсказка. Используйте extraReducers
+
+// extraReducers: (builder) => { // ✅
+//     builder.addCase(increase, (state) => {
+//       state.celsius += 2
+//     })
+//   },
