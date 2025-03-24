@@ -1,8 +1,8 @@
 import { useEffect } from "react"
+import { createRoot } from "react-dom/client"
 import { Provider, useDispatch, useSelector } from "react-redux"
 import axios from "axios"
 import { asyncThunkCreator, buildCreateSlice, configureStore } from "@reduxjs/toolkit"
-import { createRoot } from "react-dom/client"
 
 // Types
 type Todolist = {
@@ -25,15 +25,15 @@ type UsersResponse = {
   totalCount: number
 }
 
-// Api
+// API
 const instance = axios.create({ baseURL: "https://exams-frontend.kimitsu.it-incubator.io/api/" })
 
 const api = {
   getTodos() {
-    return instance.get<Todolist[]>("todos")
+    return instance.get<Todolist[]>("todo")
   },
   getUsers() {
-    return instance.get<UsersResponse>("users")
+    return instance.get<UsersResponse>("user")
   },
 }
 
@@ -57,11 +57,12 @@ const slice = createAppSlice({
       state.error = action.payload.error
     }),
     fetchTodolists: create.asyncThunk(
-      async (_arg, { rejectWithValue }) => {
+      async (_arg, { dispatch, rejectWithValue }) => {
         try {
-          const responseTodolists = await api.getTodos() // ❗AAA
-          return { todolists: responseTodolists.data } // ❗BBB
-        } catch (error) {
+          const res = await api.getTodos()
+          return { todolists: res.data }
+        } catch (error: any) {
+          handleErrors(dispatch, error.message)
           return rejectWithValue(null)
         }
       },
@@ -72,11 +73,12 @@ const slice = createAppSlice({
       },
     ),
     fetchUsers: create.asyncThunk(
-      async (_arg, { rejectWithValue }) => {
+      async (_arg, { dispatch, rejectWithValue }) => {
         try {
-          const responseUsers = await api.getUsers() // ❗CCC
-          return { users: responseUsers.data.items } // ❗DDD
-        } catch (error) {
+          const res = await api.getUsers()
+          return { users: res.data.items }
+        } catch (error: any) {
+          handleErrors(dispatch, error.message)
           return rejectWithValue(null)
         }
       },
@@ -90,10 +92,20 @@ const slice = createAppSlice({
 })
 
 const appReducer = slice.reducer
-const { fetchTodolists, fetchUsers } = slice.actions
+const { setError, fetchTodolists, fetchUsers } = slice.actions
 const { selectTodolists, selectUsers, selectError } = slice.selectors
 
-// App
+// Utils functions
+const handleErrors = (dispatch:AppDispatch, error: { message: string }) => {
+  console.log("error")
+  dispatch(setError({ error: `Request failed with status code 404 ${error.message}` }))
+}
+
+// export const handleServerNetworkError = (error: { message: string }, dispatch: AppDispatch) => {
+//   dispatch(setAppErrorAC(error.message))
+//   dispatch(setAppStatusAC("failed"))
+// }
+
 const App = () => {
   return (
     <>
@@ -143,13 +155,11 @@ const Users = () => {
       <h2>🙂 Список юзеров</h2>
       {!!error && <h2 style={{ color: "red" }}>{error}</h2>}
       <div>
-        {users.map((user) => {
-          return (
-            <div key={user.id}>
-              <b>name</b>:{user.name} - <b>age</b>:{user.age}
-            </div>
-          )
-        })}
+        {users.map((user) => (
+          <div key={user.id}>
+            <b>name</b>:{user.name} - <b>age</b>:{user.age}
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -172,20 +182,20 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </Provider>,
 )
-
 // 📜 Описание:
-// Что нужно написать вместо // ❗AAA, ❗BBB, ❗CCC, ❗DDD для того чтобы на экране
-// отобразился список тудулистов и юзеров
-// Каждый ответ укажите на новой строке или через пробел соблюдая порядок
+// Откройте network и вы увидите что запросы за тудулистами и пользователями падают с ошибками,
+// но пользователе не видит ошибок, потому что утилитная функция handleErrors написана неверно.
+// Ваша задача дописать функцию handleErrors, чтобы пользователь на экране увидел ошибки:
+// 'Request failed with status code 404'
+//❗ Код фиксить не нужно.
+//❗ Тип any типизации указывать запрещено
+// В качестве ответа укажите полностью написанную функцию
 
 // Пример ответа:
-// const a = 1 + 1
-// return a
-// const c = 1 + 3
-// return c
+// const handleErrors = () => {
+//   console.log("error")
+// }
 
-// const responseTodolists = await api.getTodos()
-// return { todolists: responseTodolists.data }
-//
-// const responseUsers = await api.getUsers()
-// return { users: responseUsers.data.items }
+// const handleErrors = (dispatch:AppDispatch, error: { message: string }) => {
+//   dispatch(setError({ error: `Request failed with status code 404 ${error.message}` }))
+// }
