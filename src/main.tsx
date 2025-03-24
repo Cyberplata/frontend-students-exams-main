@@ -1,174 +1,62 @@
-import { useEffect } from "react"
+import { configureStore, createSlice } from "@reduxjs/toolkit"
 import { createRoot } from "react-dom/client"
 import { Provider, useDispatch, useSelector } from "react-redux"
-import axios from "axios"
-import { asyncThunkCreator, buildCreateSlice, configureStore } from "@reduxjs/toolkit"
 
-// Types
-type Todolist = {
-  id: string
-  title: string
-  order: number
-  createdAt: string
-  updatedAt: string
-  completed: boolean
-}
-
-type User = {
-  id: string
-  name: string
-  age: number
-}
-
-type UsersResponse = {
-  items: User[]
-  totalCount: number
-}
-
-// API
-const instance = axios.create({ baseURL: "https://exams-frontend.kimitsu.it-incubator.io/api/" })
-
-const api = {
-  getTodos() {
-    return instance.get<Todolist[]>("todo")
-  },
-  getUsers() {
-    return instance.get<UsersResponse>("user")
-  },
-}
-
-// Slice
-const createAppSlice = buildCreateSlice({ creators: { asyncThunk: asyncThunkCreator } })
-
-const slice = createAppSlice({
-  name: "app",
-  initialState: {
-    todolists: [] as Todolist[],
-    users: [] as User[],
-    error: null as string | null,
+// slice
+const slice = createSlice({
+  name: "products",
+  initialState: [
+    { id: 1, name: "Laptop", inStock: true, price: 1500 },
+    { id: 2, name: "Smartphone", inStock: false, price: 800 },
+    { id: 3, name: "Tablet", inStock: true, price: 600 },
+  ],
+  reducers: {
+    applyDiscount: (state, action) => {
+      const discount = action.payload
+      state.forEach((product) => {
+        product.price = product.price - (product.price * discount) / 100
+      })
+    },
   },
   selectors: {
-    selectTodolists: (state) => state.todolists,
-    selectUsers: (state) => state.users,
-    selectError: (state) => state.error,
+    selectProducts: (state) => state,
   },
-  reducers: (create) => ({
-    setError: create.reducer<{ error: string | null }>((state, action) => {
-      state.error = action.payload.error
-    }),
-    fetchTodolists: create.asyncThunk(
-      async (_arg, { dispatch, rejectWithValue }) => {
-        try {
-          const res = await api.getTodos()
-          return { todolists: res.data }
-        } catch (error: any) {
-          handleErrors(dispatch, error.message)
-          return rejectWithValue(null)
-        }
-      },
-      {
-        fulfilled: (state, action) => {
-          state.todolists = action.payload.todolists
-        },
-      },
-    ),
-    fetchUsers: create.asyncThunk(
-      async (_arg, { dispatch, rejectWithValue }) => {
-        try {
-          const res = await api.getUsers()
-          return { users: res.data.items }
-        } catch (error: any) {
-          handleErrors(dispatch, error.message)
-          return rejectWithValue(null)
-        }
-      },
-      {
-        fulfilled: (state, action) => {
-          state.users = action.payload.users
-        },
-      },
-    ),
-  }),
 })
 
-const appReducer = slice.reducer
-const { setError, fetchTodolists, fetchUsers } = slice.actions
-const { selectTodolists, selectUsers, selectError } = slice.selectors
+const { applyDiscount } = slice.actions
+const { selectProducts } = slice.selectors
 
-// Utils functions
-const handleErrors = (dispatch:AppDispatch, error: { message: string }) => {
-  console.log("error")
-  dispatch(setError({ error: `Request failed with status code 404 ${error.message}` }))
-}
-
-// export const handleServerNetworkError = (error: { message: string }, dispatch: AppDispatch) => {
-//   dispatch(setAppErrorAC(error.message))
-//   dispatch(setAppStatusAC("failed"))
-// }
-
+// App.tsx
 const App = () => {
-  return (
-    <>
-      <h1>✅Todos & 🙂Users</h1>
-      <div style={{ display: "flex", justifyContent: "space-evenly" }}>
-        <Todos />
-        <Users />
-      </div>
-    </>
-  )
-}
-
-const Todos = () => {
+  const products = useAppSelector(selectProducts)
   const dispatch = useAppDispatch()
-  const todolists = useAppSelector(selectTodolists)
-  const error = useAppSelector(selectError)
 
-  useEffect(() => {
-    dispatch(fetchTodolists())
-  }, [])
+  const handleDiscount = (discount: number) => {
+    dispatch(applyDiscount(discount))
+  }
 
   return (
     <div>
-      <h2>✅ Список тудулистов</h2>
-      {!!error && <h2 style={{ color: "red" }}>{error}</h2>}
-      {todolists.map((todolist) => (
-        <div style={todolist.completed ? { color: "grey" } : {}} key={todolist.id}>
-          <input type="checkbox" checked={todolist.completed} />
-          <b>Описание</b>: {todolist.title}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-const Users = () => {
-  const dispatch = useAppDispatch()
-  const users = useAppSelector(selectUsers)
-  const error = useAppSelector(selectError)
-
-  useEffect(() => {
-    dispatch(fetchUsers())
-  }, [])
-
-  return (
-    <div>
-      <h2>🙂 Список юзеров</h2>
-      {!!error && <h2 style={{ color: "red" }}>{error}</h2>}
-      <div>
-        {users.map((user) => (
-          <div key={user.id}>
-            <b>name</b>:{user.name} - <b>age</b>:{user.age}
-          </div>
+      <button onClick={() => handleDiscount(10)}>10% Discount</button>
+      <button onClick={() => handleDiscount(30)}>30% Discount</button>
+      <button onClick={() => handleDiscount(50)}>50% Discount</button>
+      <ul>
+        {products.map((product) => (
+          <li key={product.id}>
+            <span>
+              {product.name} ({product.inStock ? "In Stock" : "Out of Stock"}) - ${product.price.toFixed(2)}
+            </span>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   )
 }
 
-// Store
+// store.ts
 const store = configureStore({
   reducer: {
-    [slice.name]: appReducer,
+    products: slice.reducer,
   },
 })
 
@@ -177,25 +65,23 @@ type AppDispatch = typeof store.dispatch
 const useAppDispatch = useDispatch.withTypes<AppDispatch>()
 const useAppSelector = useSelector.withTypes<RootState>()
 
+// main.ts
 createRoot(document.getElementById("root")!).render(
   <Provider store={store}>
     <App />
   </Provider>,
 )
+
 // 📜 Описание:
-// Откройте network и вы увидите что запросы за тудулистами и пользователями падают с ошибками,
-// но пользователе не видит ошибок, потому что утилитная функция handleErrors написана неверно.
-// Ваша задача дописать функцию handleErrors, чтобы пользователь на экране увидел ошибки:
-// 'Request failed with status code 404'
-//❗ Код фиксить не нужно.
-//❗ Тип any типизации указывать запрещено
-// В качестве ответа укажите полностью написанную функцию
+// При нажатии на кнопки с 10%, 30% или 50% скидками цены всех продуктов должны уменьшиться на
+// указанный процент.
 
-// Пример ответа:
-// const handleErrors = () => {
-//   console.log("error")
-// }
+// 🪛 Задача:
+// Перепишите изменение стейта так, чтобы цена каждого продукта уменьшалась на указанный процент.
+// В качестве ответа укажите исправленный код написанный вместо return state.
+// ❗Операция должна быть реализована мутабельным образом.
 
-// const handleErrors = (dispatch:AppDispatch, error: { message: string }) => {
-//   dispatch(setError({ error: `Request failed with status code 404 ${error.message}` }))
-// }
+// const discount = action.payload
+//     state.forEach((product) => {
+//       product.price = product.price - (product.price * discount) / 100
+//     })
