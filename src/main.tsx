@@ -1,75 +1,99 @@
-import axios from "axios"
+import { CSSProperties } from "react"
 import { createRoot } from "react-dom/client"
-import { useEffect, useState } from "react"
+import { BrowserRouter, NavLink, Route, Routes } from "react-router"
 
-// Types
-type Comment = {
-  postId: string
-  id: string
-  name: string
-  email: string
-  body: string
+const footer: CSSProperties = {
+  padding: 10,
+  background: "lightslategrey",
 }
 
-// Api
-const instance = axios.create({ baseURL: "https://exams-frontend.kimitsu.it-incubator.io/api/" })
-
-const commentsAPI = {
-  getComments() {
-    return instance.get<Comment[]>("comments")
-  },
-  createComment() {
-    const payload = {
-      body: "Это просто заглушка. Backend сам сгенерирует новый комментарий и вернет его вам",
-    }
-    // Promise.resolve() стоит в качестве заглушки, чтобы TS не ругался и код компилировался
-    // Promise.resolve() нужно удалить и написать правильный запрос для создания нового комментария
-    return instance.post<Comment>("comments", payload)
-  },
+const link: CSSProperties = {
+  color: "lightsalmon",
+  fontSize: 20,
 }
 
-// App
-export const App = () => {
-  const [comments, setComments] = useState<Comment[]>([])
+const Dragons = () => {
+  return <h1>🐲 🐲 🐲</h1>
+}
 
-  useEffect(() => {
-    commentsAPI.getComments().then((res) => {
-      setComments(res.data)
-    })
-  }, [])
+const Cats = () => {
+  return <h1>😺 🐱 😼</h1>
+}
 
-  const createPostHandler = () => {
-    commentsAPI.createComment().then((res: any) => {
-      const newComment = res.data
-      setComments([newComment, ...comments])
-    })
-  }
+const Dogs = () => {
+  return <h1>🐶 🐶 🐶</h1>
+}
 
+const PageNotFound = () => {
+  return <h1>4️⃣0️⃣4️⃣</h1>
+}
+
+const Menu = () => {
+  return (
+    <ul>
+      <li>
+        <NavLink to={Path.Dragons} style={link}>
+          dragons
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to={Path.Cats} style={link}>
+          cats
+        </NavLink>
+      </li>
+      <li>
+        <NavLink to={Path.Dogs} style={link}>
+          dogs
+        </NavLink>
+      </li>
+    </ul>
+  )
+}
+
+// Routing
+const Path = {
+  Dragons: "dragons",
+  Cats: "cats",
+  Dogs: "dogs",
+} as const
+
+const Routing = () => {
+  return (
+    <Routes>
+      <Route path={"/"} element={<div></div>} />
+      <Route path={Path.Dragons} element={<Dragons />} />
+      <Route path={Path.Cats} element={<Cats />} />
+      <Route path={Path.Dogs} element={<Dogs />} />
+      <Route path={"*"} element={<PageNotFound/>} />
+      {/*❗XXX */}
+    </Routes>
+  )
+}
+
+const App = () => {
   return (
     <>
-      <h1>📝 Список комментариев</h1>
-      <div style={{ marginBottom: "15px" }}>
-        <button style={{ marginLeft: "15px" }} onClick={() => createPostHandler()}>
-          Добавить новый комментарий
-        </button>
-      </div>
-
-      {comments.map((c) => {
-        return (
-          <div key={c.id}>
-            <b>Comment</b>: {c.body}{" "}
-          </div>
-        )
-      })}
+      <Menu />
+      <Routing />
+      <footer style={footer}>
+        <h2>Footer</h2>
+      </footer>
     </>
   )
 }
 
-createRoot(document.getElementById("root")!).render(<App />)
+createRoot(document.getElementById("root")!).render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>,
+)
 
 // 📜 Описание:
-// Напишите запрос на сервер для создания нового комментария.
-// Типизацию возвращаемых данных в ответе указывать необязательно, но можно и указать (в ответах учтены оба варианта).
-// Исправленную версию строки напишите в качестве ответа.
+// Реализуйте Page not found
 
-// return instance.post<Comment>("comments", payload)
+// 🪛 Задача:
+// Что нужно написать вместо {/*❗XXX */},
+// чтобы при url `http://localhost:3000/fsdfdsf` и других не существующих страницах
+// отработал роут Page not found
+
+// <Route path={"*"} element={<PageNotFound/>} /> ✅
